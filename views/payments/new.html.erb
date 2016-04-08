@@ -1,0 +1,17 @@
+<h1>Make a new payment!!!!</h1>
+
+<h4>Pay from the address:</h4>
+<pre><%= @address %></pre>
+
+
+<form action="/payments" method="post">
+  <p>Enter the Amount:</p>
+  <input type="text" name="amount"></input>
+  <p>Enter the address to pay:</p>
+  <input type="text" name="address"></input>
+  <input type="submit" value="Submit">
+</form>
+
+
+<h4>(Sample Address:)</h4>
+<%=File.read("#{ENV["HOME"]}/.wallet2.der") %>
