@@ -30,7 +30,7 @@ class Wallet
   end
 
   def sign_transaction(txn)
-    signable_input_strings = txn["inputs"].map { |i| i["source_hash"] + i["source_index"].to_s }
+    signable_input_strings = txn["inputs"].map { |i| i["source-hash"] + i["source-index"].to_s }
     signable_output_strings = txn["outputs"].map { |i| i["amount"].to_s + i["address"].to_s }
     signature = sign((signable_input_strings + signable_output_strings).join("")).delete("\n")
 
@@ -107,9 +107,8 @@ class ClarkeClient
   end
 
   def generate_payment(from_key, to_key, amount)
-    # TODO
-    # payload = {from_address: from_key, to_address: to_key, amount: amount, fee: 1}
-    # send_message("generate_payment", payload)
+    payload = {from_address: from_key, to_address: to_key, amount: amount, fee: 1}
+    post("/unsigned_payment_transactions", payload)
   end
 
   def submit_transaction(txn)
@@ -161,6 +160,7 @@ post "/payments" do
     "Sorry, #{params[:amount]} is not valid."
   else
     unsigned = client.generate_payment(wallet.address, params[:address], amount)
+    puts "RECEIVED UNSIGNED PAYMENT: #{unsigned}"
     signed = wallet.sign_transaction(unsigned["payload"])
     resp = client.submit_transaction(signed)
     content_type :json
