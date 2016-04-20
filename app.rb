@@ -4,6 +4,7 @@ require "json"
 require "pry"
 require "openssl"
 require "base64"
+require "net/http"
 
 Tilt.register Tilt::ERBTemplate, 'html.erb'
 
@@ -52,9 +53,28 @@ end
 
 class ClarkeClient
   attr_reader :host, :port
-  def initialize(host = "localhost", port = 8334)
+  def initialize(host = "localhost", port = 3000)
     @host = host
     @port = port
+  end
+
+
+  def post(path, data)
+    uri = URI("http://#{host}:#{port}#{path}")
+
+    Net::HTTP.start(uri.host, uri.port) do |http|
+      request = Net::HTTP::Post.new uri
+      request.set_content_type("application/json")
+      request.body = data.to_json
+
+      response = http.request request
+      JSON.parse(response.body)
+    end
+  end
+
+  def get(path)
+    uri = URI("http://#{host}:#{port}#{path}")
+    JSON.parse(Net::HTTP.get(uri))
   end
 
   def send_message(type, payload = {})
@@ -67,32 +87,33 @@ class ClarkeClient
   end
 
   def echo(payload)
-    send_message("echo", payload)
+    post("/echo", payload)
   end
 
   def get_blocks
-    send_message("get_blocks")
+    get("/blocks")
   end
 
   def get_block(hash)
-    send_message("get_block", hash)
+    get("/blocks/#{hash}")
   end
 
   def get_transaction(hash)
-    send_message("get_transaction", hash)
+    get("/transactions/#{hash}")
   end
 
   def get_balance(address)
-    send_message("get_balance", address)
+    post("/balance", {address: address})
   end
 
   def generate_payment(from_key, to_key, amount)
-    payload = {from_address: from_key, to_address: to_key, amount: amount, fee: 1}
-    send_message("generate_payment", payload)
+    # TODO
+    # payload = {from_address: from_key, to_address: to_key, amount: amount, fee: 1}
+    # send_message("generate_payment", payload)
   end
 
   def submit_transaction(txn)
-    send_message("submit_transaction", txn)
+    post("/pending_transactions", txn)
   end
 end
 
